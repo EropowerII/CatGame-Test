@@ -25,8 +25,8 @@ export class AnimationManager {
   private frameDuration = 120; // Slightly slower for better watercolor feel
   private sheets: Partial<Record<CatState, HTMLCanvasElement | HTMLImageElement>> = {};
   private paths: Partial<Record<CatState, string>> = {
-    [CatState.WALKING]: "/Assets/Cat/Walk1.png",
-    [CatState.IDLE]: "/Assets/Cat/Idle1.png",
+    [CatState.WALKING]: `${import.meta.env.BASE_URL}Assets/Cat/Walk1.png`.replace("//", "/"),
+    [CatState.IDLE]: `${import.meta.env.BASE_URL}Assets/Cat/Idle1.png`.replace("//", "/"),
   };
 
   constructor() {
@@ -50,10 +50,12 @@ export class AnimationManager {
   private async preloadSheet(state: CatState, path: string) {
     return new Promise<void>((resolve) => {
       const img = new Image();
+      // Use relative paths to be compatible with GitHub Pages / subpaths
       img.src = path;
       img.crossOrigin = "anonymous";
       img.onload = () => {
-        if (img.naturalWidth >= 32 && img.naturalHeight >= 32) {
+        if (img.naturalWidth > 0) {
+          console.log(`Cat sprite sheet loaded for state ${state}: ${path} (${img.naturalWidth}x${img.naturalHeight})`);
           const processed = this.processSpriteSheet(img);
           this.sheets[state] = processed;
 
@@ -110,18 +112,25 @@ export class AnimationManager {
   }
 
   public getSpriteSheet(state: CatState) {
-    return this.sheets[state] || this.sheets[CatState.WALKING] || null;
+    const sheet = this.sheets[state] || this.sheets[CatState.IDLE] || this.sheets[CatState.WALKING];
+    return sheet || null;
+  }
+
+  public getFrames(state: CatState) {
+    return this.frames[state] || this.frames[CatState.IDLE];
   }
 
   public update(deltaTime: number, state: CatState) {
     this.frameTimer += deltaTime;
-    if (this.frameTimer >= this.frameDuration) {
+    const stateFrames = this.getFrames(state);
+    if (this.frameTimer >= this.frameDuration && stateFrames.length > 0) {
       this.frameTimer = 0;
-      this.currentFrameIndex = (this.currentFrameIndex + 1) % this.frames[state].length;
+      this.currentFrameIndex = (this.currentFrameIndex + 1) % stateFrames.length;
     }
   }
 
   public getCurrentFrame(state: CatState): AnimationFrame {
-    return this.frames[state][this.currentFrameIndex];
+    const stateFrames = this.getFrames(state);
+    return stateFrames[this.currentFrameIndex % stateFrames.length];
   }
 }

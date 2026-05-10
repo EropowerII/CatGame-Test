@@ -124,19 +124,22 @@ class Cat {
       ctx.scale(-1, 1);
     }
 
-    const isSpriteReady = sprite && (sprite instanceof HTMLImageElement ? sprite.naturalWidth > 1 : true);
+    const isSpriteReady = sprite && (sprite instanceof HTMLImageElement ? sprite.naturalWidth > 0 : true);
 
     if (isSpriteReady) {
       // Draw sprite frame
-      const dSize = 240; // Doubled from 120
-      // Check if frame exists for this state (fall back to idle frame 0 if not)
-      const f = frame || (anim as any).frames[CatState.IDLE][0];
+      const dSize = 240; // Consistent draw size
+      const f = frame;
       
-      ctx.drawImage(
-        sprite,
-        f.x, f.y, f.width, f.height,
-        -dSize / 2, -dSize / 2, dSize, dSize
-      );
+      if (f) {
+        ctx.drawImage(
+          sprite!,
+          f.x, f.y, f.width, f.height,
+          -dSize / 2, -dSize / 2, dSize, dSize
+        );
+      } else {
+        this.drawVectorPlaceholder(ctx);
+      }
     } else {
       // Fallback to vector drawing for other states or if asset missing
       this.drawVectorPlaceholder(ctx);
@@ -421,7 +424,7 @@ export default function GameScreen({ episode, onExit }: GameScreenProps) {
          >
             {/* Background Image Layer */}
             <img 
-              src={bgError ? "https://images.unsplash.com/photo-1513360371669-4ada4801c20c?auto=format&fit=crop&w=1920&q=80" : (episode.backgroundUrl || "https://images.unsplash.com/photo-1513360371669-4ada4801c20c?auto=format&fit=crop&w=1920&q=80")}
+              src={bgError ? "https://images.unsplash.com/photo-1513360371669-4ada4801c20c?auto=format&fit=crop&w=1920&q=80" : (episode.backgroundUrl.startsWith('http') ? episode.backgroundUrl : `${import.meta.env.BASE_URL}${episode.backgroundUrl}`.replace('//', '/'))}
               onError={() => setBgError(true)}
               className="absolute inset-0 w-full h-full object-cover pointer-events-none"
               alt="background"
