@@ -21,6 +21,12 @@ class Cat {
   size: number = 64;
   path: Point[] = [];
   idleTimer: number = 0;
+  zAnim = {
+    active: false,
+    yOffset: 0,
+    opacity: 0,
+    timer: 0
+  };
 
   constructor(x: number, y: number) {
     this.pos = { x, y };
@@ -30,6 +36,7 @@ class Cat {
     if (this.target || this.path.length > 0) {
       this.state = CatState.WALKING;
       this.idleTimer = 0;
+      this.zAnim.active = false;
       
       // If we don't have a path but have a target, find path
       if (this.path.length === 0 && this.target) {
@@ -62,9 +69,31 @@ class Cat {
        this.idleTimer += dt;
        if (this.idleTimer > 5000) {
          this.state = CatState.SLEEPING;
+         this.updateZ(dt);
        } else {
          this.state = CatState.IDLE;
+         this.zAnim.active = false;
        }
+    }
+  }
+
+  updateZ(dt: number) {
+    if (!this.zAnim.active) {
+      // Start new Z
+      this.zAnim = {
+        active: true,
+        yOffset: 0,
+        opacity: 1,
+        timer: 0
+      };
+    } else {
+      this.zAnim.timer += dt;
+      this.zAnim.yOffset -= 1.5; // Float up
+      this.zAnim.opacity = Math.max(0, 1 - (this.zAnim.timer / 2000)); // Fade out over 2s
+      
+      if (this.zAnim.opacity <= 0) {
+        this.zAnim.active = false; // Trigger reset on next frame
+      }
     }
   }
 
@@ -111,11 +140,18 @@ class Cat {
       ctx.beginPath(); ctx.arc(25, -18, 5, 0.2, Math.PI - 0.2); ctx.stroke();
       ctx.beginPath(); ctx.arc(33, -18, 5, 0.2, Math.PI - 0.2); ctx.stroke();
       
-      // Zzz particles (simplified for the placeholder)
-      if (Math.random() > 0.95) {
+      // Zzz floating animation
+      if (this.zAnim.active) {
+        ctx.save();
+        // Add a slight wave/sine motion to the X position
+        const waveX = Math.sin(this.zAnim.timer * 0.005) * 15;
+        ctx.translate(35 + waveX, -45 + this.zAnim.yOffset);
+        ctx.globalAlpha = this.zAnim.opacity;
         ctx.fillStyle = "white";
-        ctx.font = "bold 16px Arial";
-        ctx.fillText("Z", 40, -40);
+        ctx.font = "bold 32px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Z", 0, 0);
+        ctx.restore();
       }
     } else {
       ctx.fillStyle = "black";
