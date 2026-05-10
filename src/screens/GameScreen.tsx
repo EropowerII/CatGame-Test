@@ -306,13 +306,7 @@ export default function GameScreen({ episode, onExit }: GameScreenProps) {
               referrerPolicy="no-referrer"
             />
 
-            <div className="absolute inset-0 pointer-events-none z-0 opacity-40">
-              {/* Sunbeam effect spanning the full stage */}
-              <div 
-                className="absolute top-0 right-1/4 w-1/4 h-[150%] bg-gradient-to-b from-white/30 to-transparent"
-                style={{ transform: 'rotate(-25deg)', transformOrigin: 'top right' }}
-              />
-            </div>
+
 
             <canvas
               ref={canvasRef}
