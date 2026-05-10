@@ -21,6 +21,7 @@ class Cat {
   size: number = 64;
   path: Point[] = [];
   idleTimer: number = 0;
+  facingLeft: boolean = false;
   zAnim = {
     active: false,
     yOffset: 0,
@@ -53,6 +54,11 @@ class Cat {
       const dx = nextPoint.x - this.pos.x;
       const dy = nextPoint.y - this.pos.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
+
+      // Determine facing direction based on horizontal movement
+      if (Math.abs(dx) > 0.1) {
+        this.facingLeft = dx < 0;
+      }
 
       if (dist < this.speed) {
         this.pos = { ...nextPoint };
@@ -102,6 +108,11 @@ class Cat {
     
     ctx.save();
     ctx.translate(this.pos.x, this.pos.y);
+    
+    // Apply horizontal flip if facing left
+    if (this.facingLeft) {
+      ctx.scale(-1, 1);
+    }
     
     // Character drawn with theme colors
     ctx.fillStyle = "#FF9F1C"; // brand-orange
