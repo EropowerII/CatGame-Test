@@ -25,8 +25,8 @@ export class AnimationManager {
   private frameDuration = 120; // Slightly slower for better watercolor feel
   private sheets: Partial<Record<CatState, HTMLCanvasElement | HTMLImageElement>> = {};
   private paths: Partial<Record<CatState, string>> = {
-    [CatState.WALKING]: `${import.meta.env.BASE_URL}Assets/Cat/Walk1.png`.replace("//", "/"),
-    [CatState.IDLE]: `${import.meta.env.BASE_URL}Assets/Cat/Idle1.png`.replace("//", "/"),
+    [CatState.WALKING]: "Assets/Cat/Walk1.png",
+    [CatState.IDLE]: "Assets/Cat/Idle1.png",
   };
 
   constructor() {

@@ -424,7 +424,7 @@ export default function GameScreen({ episode, onExit }: GameScreenProps) {
          >
             {/* Background Image Layer */}
             <img 
-              src={bgError ? "https://images.unsplash.com/photo-1513360371669-4ada4801c20c?auto=format&fit=crop&w=1920&q=80" : (episode.backgroundUrl.startsWith('http') ? episode.backgroundUrl : `${import.meta.env.BASE_URL}${episode.backgroundUrl}`.replace('//', '/'))}
+              src={bgError ? "https://images.unsplash.com/photo-1513360371669-4ada4801c20c?auto=format&fit=crop&w=1920&q=80" : (episode.backgroundUrl.startsWith('http') ? episode.backgroundUrl : episode.backgroundUrl)}
               onError={() => setBgError(true)}
               className="absolute inset-0 w-full h-full object-cover pointer-events-none"
               alt="background"
