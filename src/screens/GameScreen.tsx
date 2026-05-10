@@ -139,6 +139,7 @@ export default function GameScreen({ episode, onExit }: GameScreenProps) {
   const puzzleHandler = useRef(new PuzzleHandler());
   
   const [cat] = useState(new Cat(300, 900));
+  const [bgError, setBgError] = useState(false);
   const requestRef = useRef<number>(null);
   const lastTimeRef = useRef<number>(0);
 
@@ -298,7 +299,8 @@ export default function GameScreen({ episode, onExit }: GameScreenProps) {
          >
             {/* Background Image Layer */}
             <img 
-              src={episode.backgroundUrl || "https://images.unsplash.com/photo-1513360371669-4ada4801c20c?auto=format&fit=crop&w=1920&q=80"}
+              src={bgError ? "https://images.unsplash.com/photo-1513360371669-4ada4801c20c?auto=format&fit=crop&w=1920&q=80" : (episode.backgroundUrl || "https://images.unsplash.com/photo-1513360371669-4ada4801c20c?auto=format&fit=crop&w=1920&q=80")}
+              onError={() => setBgError(true)}
               className="absolute inset-0 w-full h-full object-cover pointer-events-none"
               alt="background"
               referrerPolicy="no-referrer"

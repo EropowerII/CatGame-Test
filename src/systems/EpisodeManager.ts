@@ -15,7 +15,7 @@ export class EpisodeManager {
       title: "Episode 1: The New Room",
       description: "Explore the cozy living room and learn the basics.",
       isUnlocked: true,
-      backgroundUrl: "Assets/Backgrounds/LivingRoom_Morning.png",
+      backgroundUrl: "/Assets/Backgrounds/LivingRoom_Morning.png",
     },
     { id: "2", title: "Episode 2: Locked", description: "Comming soon...", isUnlocked: false, backgroundUrl: "" },
     { id: "3", title: "Episode 3: Locked", description: "Comming soon...", isUnlocked: false, backgroundUrl: "" },
