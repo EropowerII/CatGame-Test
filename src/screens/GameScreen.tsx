@@ -18,9 +18,10 @@ class Cat {
   target: Point | null = null;
   speed: number = 3;
   state: CatState = CatState.IDLE;
-  size: number = 64;
+  size: number = 64; // Visual size for drawing
   path: Point[] = [];
   idleTimer: number = 0;
+  walkAnimTimer: number = 0;
   facingLeft: boolean = false;
   zAnim = {
     active: false,
@@ -65,10 +66,12 @@ class Cat {
         this.path.shift();
         if (this.path.length === 0) {
           this.state = CatState.IDLE;
+          this.walkAnimTimer = 0;
         }
       } else {
         this.pos.x += (dx / dist) * this.speed;
         this.pos.y += (dy / dist) * this.speed;
+        this.walkAnimTimer += dt;
       }
     } else {
        // Idle logic: transition to sleeping after 5 seconds of inactivity
@@ -104,73 +107,142 @@ class Cat {
   }
 
   draw(ctx: CanvasRenderingContext2D, anim: AnimationManager) {
-    // const frame = anim.getCurrentFrame(this.state);
+    const sprite = anim.getSpriteSheet(this.state);
+    const frame = anim.getCurrentFrame(this.state);
     
     ctx.save();
     ctx.translate(this.pos.x, this.pos.y);
+    
+    // Add walking bobbing effect
+    if (this.state === CatState.WALKING) {
+      const bob = Math.sin(this.walkAnimTimer * 0.015) * 8;
+      ctx.translate(0, bob);
+    }
     
     // Apply horizontal flip if facing left
     if (this.facingLeft) {
       ctx.scale(-1, 1);
     }
+
+    const isSpriteReady = sprite && (sprite instanceof HTMLImageElement ? sprite.naturalWidth > 1 : true);
+
+    if (isSpriteReady) {
+      // Draw sprite frame
+      const dSize = 240; // Doubled from 120
+      // Check if frame exists for this state (fall back to idle frame 0 if not)
+      const f = frame || (anim as any).frames[CatState.IDLE][0];
+      
+      ctx.drawImage(
+        sprite,
+        f.x, f.y, f.width, f.height,
+        -dSize / 2, -dSize / 2, dSize, dSize
+      );
+    } else {
+      // Fallback to vector drawing for other states or if asset missing
+      this.drawVectorPlaceholder(ctx);
+    }
+
+    ctx.restore();
+  }
+
+  private drawVectorPlaceholder(ctx: CanvasRenderingContext2D) {
+    const isWalking = this.state === CatState.WALKING;
+    const walkCycle = Math.sin(this.walkAnimTimer * 0.015);
     
-    // Character drawn with theme colors
-    ctx.fillStyle = "#FF9F1C"; // brand-orange
-    ctx.strokeStyle = "#E67E22"; // border
-    ctx.lineWidth = 3;
+    // Scale the vector drawing to roughly 240px bounding box
+    ctx.scale(3.0, 3.0);
     
+    // Legs (Simple moving lines for walk)
+    if (isWalking) {
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#D35400";
+      ctx.beginPath();
+      // Back legs
+      ctx.moveTo(-10, 15); ctx.lineTo(-10 + walkCycle * 8, 28);
+      ctx.moveTo(-20, 15); ctx.lineTo(-20 - walkCycle * 8, 28);
+      // Front legs
+      ctx.moveTo(10, 15); ctx.lineTo(10 - walkCycle * 8, 28);
+      ctx.moveTo(20, 15); ctx.lineTo(20 + walkCycle * 8, 28);
+      ctx.stroke();
+      ctx.lineWidth = 3;
+    }
+
     // Tail
+    ctx.save();
+    if (isWalking) {
+      ctx.rotate(walkCycle * 0.2);
+    }
+    ctx.strokeStyle = "#E67E22";
     ctx.beginPath();
     ctx.moveTo(-25, 10);
-    ctx.quadraticCurveTo(-40, 20, -35, 5);
+    ctx.quadraticCurveTo(-45, 30, -40, -10);
     ctx.stroke();
+    ctx.restore();
 
     // Body
+    ctx.fillStyle = "#FF9F1C";
+    ctx.strokeStyle = "#E67E22";
     ctx.beginPath();
-    ctx.ellipse(0, 0, 30, 22, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 32, 24, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     
     // Head
     ctx.beginPath();
-    ctx.arc(22, -15, 18, 0, Math.PI * 2);
+    ctx.arc(22, -15, 20, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     
     // Ears
     ctx.beginPath();
-    ctx.moveTo(12, -25); ctx.lineTo(18, -40); ctx.lineTo(24, -25); ctx.fill(); ctx.stroke();
+    ctx.moveTo(12, -25); ctx.lineTo(18, -45); ctx.lineTo(24, -25); ctx.fill(); ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(26, -25); ctx.lineTo(32, -40); ctx.lineTo(38, -25); ctx.fill(); ctx.stroke();
+    ctx.moveTo(26, -25); ctx.lineTo(32, -45); ctx.lineTo(38, -25); ctx.fill(); ctx.stroke();
     
-    // Eyes
+    // Face Details
     if (this.state === CatState.SLEEPING) {
-      // Closed eyes (curved lines)
       ctx.strokeStyle = "rgba(0,0,0,0.6)";
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(25, -18, 5, 0.2, Math.PI - 0.2); ctx.stroke();
-      ctx.beginPath(); ctx.arc(33, -18, 5, 0.2, Math.PI - 0.2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(36, -18, 5, 0.2, Math.PI - 0.2); ctx.stroke();
       
-      // Zzz floating animation
       if (this.zAnim.active) {
         ctx.save();
-        // Add a slight wave/sine motion to the X position
         const waveX = Math.sin(this.zAnim.timer * 0.005) * 15;
-        ctx.translate(35 + waveX, -45 + this.zAnim.yOffset);
+        ctx.translate(40 + waveX, -50 + this.zAnim.yOffset);
         ctx.globalAlpha = this.zAnim.opacity;
         ctx.fillStyle = "white";
-        ctx.font = "bold 32px Arial";
+        ctx.font = "bold 34px Arial";
         ctx.textAlign = "center";
+        ctx.shadowColor = "rgba(0,0,0,0.3)";
+        ctx.shadowBlur = 4;
         ctx.fillText("Z", 0, 0);
         ctx.restore();
       }
     } else {
+      // Eyes
       ctx.fillStyle = "black";
-      ctx.beginPath(); ctx.arc(25, -18, 3, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(33, -18, 3, 0, Math.PI*2); ctx.fill();
-    }
+      ctx.beginPath(); ctx.arc(25, -18, 4, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(36, -18, 4, 0, Math.PI*2); ctx.fill();
+      
+      // Nose
+      ctx.fillStyle = "#E74C3C";
+      ctx.beginPath();
+      ctx.moveTo(31, -12); ctx.lineTo(28, -10); ctx.lineTo(34, -10); ctx.closePath();
+      ctx.fill();
 
-    ctx.restore();
+      // Whiskers
+      ctx.strokeStyle = "rgba(0,0,0,0.3)";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(40, -12); ctx.lineTo(55, -15); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(40, -10); ctx.lineTo(55, -10); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(40, -8); ctx.lineTo(55, -5); ctx.stroke();
+      
+      // Inside ears (pink)
+      ctx.fillStyle = "#FFC0CB";
+      ctx.beginPath(); ctx.moveTo(15, -28); ctx.lineTo(18, -38); ctx.lineTo(21, -28); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(29, -28); ctx.lineTo(32, -38); ctx.lineTo(35, -28); ctx.fill();
+    }
   }
 }
 
@@ -191,6 +263,9 @@ export default function GameScreen({ episode, onExit }: GameScreenProps) {
   const lastTimeRef = useRef<number>(0);
 
   useEffect(() => {
+    // Preload sprites
+    animManager.current.preload();
+
     // Setup initial POIs and Obstacles
     if (episode.id === "1") {
       // Landscape coordinates for the living room image
